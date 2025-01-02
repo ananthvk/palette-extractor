@@ -54,6 +54,8 @@ auto Image::channels() const -> int { return num_components_; }
 
 auto Image::buffer() -> unsigned char * { return buffer_; }
 
+auto Image::buffer() const -> const unsigned char * { return buffer_; }
+
 auto Image::size() const -> size_t { return width_ * height_ * num_components_; }
 
 Image::~Image()

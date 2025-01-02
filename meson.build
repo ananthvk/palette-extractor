@@ -38,6 +38,6 @@ endif
 
 executable(
     'palette',
-    sources: ['main.cpp', 'image.cpp'],
+    sources: ['main.cpp', 'image.cpp', 'kmeans.cpp'],
     cpp_args: extra_args,
 )

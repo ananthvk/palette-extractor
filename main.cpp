@@ -1,3 +1,4 @@
+#include "cluster.hpp"
 #include "image.hpp"
 #include <iostream>
 using std::swap;
@@ -12,13 +13,15 @@ auto main(int argc, char *argv[]) -> int
     try
     {
         Image img = Image::from_file(argv[2]);
-        Image cpy = img;
-        Image ghi = std::move(cpy);
-        swap(ghi, img);
         std::cout << "Resolution: " << img.width() << "x" << img.height() << std::endl;
         std::cout << "Number of channels: " << img.channels() << std::endl;
-        std::cout << img.at_rgb(0, 0).format_hex() << std::endl;
-        std::cout << img.at_rgb(0, 0).format_tuple() << std::endl;
+        KMeans kmeans(5);
+        kmeans.fit(img);
+        std::cout << "Dominant colors: " << std::endl;
+        for (const auto &label : kmeans.labels())
+        {
+            std::cout << label.format_hex() << std::endl;
+        }
     }
     catch (std::exception &e)
     {

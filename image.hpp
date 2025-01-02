@@ -1,5 +1,4 @@
 #pragma once
-#include "stb_image.h"
 #include <iomanip>
 #include <stdexcept>
 #include <string>
@@ -10,7 +9,19 @@ class Color
     unsigned char r, g, b, a;
     bool has_alpha;
 
-    Color() : r(0), g(0), b(0), a(255), has_alpha(false) {}
+    Color() : r(0), g(0), b(0), a(0), has_alpha(false) {}
+
+    Color(unsigned char value) : r(value), g(value), b(value), a(0), has_alpha(false) {}
+
+    Color(unsigned char r, unsigned char g, unsigned char b)
+        : r(r), g(g), b(b), a(0), has_alpha(false)
+    {
+    }
+
+    Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+        : r(r), g(g), b(b), a(a), has_alpha(true)
+    {
+    }
 
     auto format_hex() const -> std::string
     {
@@ -39,6 +50,15 @@ class Color
             oss << ", " << +a;
         oss << ")";
         return oss.str();
+    }
+
+    auto distance_squared(Color other) -> int
+    {
+        int rdelta = r - other.r;
+        int gdelta = g - other.g;
+        int bdelta = b - other.b;
+        int adelta = a - other.a;
+        return (rdelta * rdelta) + (gdelta * gdelta) + (bdelta * bdelta) + (adelta * adelta);
     }
 };
 
@@ -78,6 +98,7 @@ class Image
     auto size() const -> size_t;
     // Returns pointer to underlying data buffer
     auto buffer() -> unsigned char *;
+    auto buffer() const -> const unsigned char *;
 
     auto at_gray(int row, int col) const -> Color;
     auto at_gray_alpha(int row, int col) const -> Color;
