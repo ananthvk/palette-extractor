@@ -1,5 +1,5 @@
 project(
-    'palette-extractor',
+    'palette',
     ['cpp'],
     version: '0.1',
     license: 'MIT',
@@ -36,4 +36,8 @@ else
     extra_args = []
 endif
 
-executable('palette-extractor', sources: ['main.cpp'], cpp_args: extra_args)
+executable(
+    'palette',
+    sources: ['main.cpp', 'image.cpp'],
+    cpp_args: extra_args,
+)
