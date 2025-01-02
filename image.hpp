@@ -1,7 +1,46 @@
 #pragma once
 #include "stb_image.h"
+#include <iomanip>
 #include <stdexcept>
 #include <string>
+
+class Color
+{
+  public:
+    unsigned char r, g, b, a;
+    bool has_alpha;
+
+    Color() : r(0), g(0), b(0), a(255), has_alpha(false) {}
+
+    auto format_hex() const -> std::string
+    {
+        std::ostringstream oss;
+        oss << "#";
+        oss << std::hex << std::setfill('0');
+        oss << std::setw(2) << +r;
+        oss << std::setw(2) << +g;
+        oss << std::setw(2) << +b;
+        if (has_alpha)
+            oss << std::setw(2) << +a;
+        return oss.str();
+    }
+
+    auto format_tuple() const -> std::string
+    {
+        std::ostringstream oss;
+        if (has_alpha)
+            oss << "rgba(";
+        else
+            oss << "rgb(";
+        oss << +r;
+        oss << ", " << +g;
+        oss << ", " << +b;
+        if (has_alpha)
+            oss << ", " << +a;
+        oss << ")";
+        return oss.str();
+    }
+};
 
 class image_error : public std::runtime_error
 {
@@ -16,6 +55,7 @@ class Image
     int width_;
     int height_;
     int num_components_;
+    // Pixels are stored row wise in RGB(A) format
     unsigned char *buffer_;
     // Was the buffer created by the library or did we create it
     bool is_buffer_created_by_stbi;
@@ -23,15 +63,26 @@ class Image
 
   public:
     static Image from_file(const std::string &path);
+    /// Creates an image from an already existing buffer
+    /// @note It does not take ownership of the buffer, and it is the responsibility of the caller
+    /// to free the buffer
+    static Image from_buffer(unsigned char *buffer, int width, int height, int channels);
+
+    static Image create(int width, int height, int channels);
+
     auto width() const -> int;
     auto height() const -> int;
     auto file_path() const -> std::string;
     auto channels() const -> int;
     // Returns the size of pixel data in bytes
-    auto size() const -> int;
-
+    auto size() const -> size_t;
     // Returns pointer to underlying data buffer
     auto buffer() -> unsigned char *;
+
+    auto at_gray(int row, int col) const -> Color;
+    auto at_gray_alpha(int row, int col) const -> Color;
+    auto at_rgb(int row, int col) const -> Color;
+    auto at_rgba(int row, int col) const -> Color;
 
     ~Image();
     Image(const Image &other);

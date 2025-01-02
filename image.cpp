@@ -1,7 +1,26 @@
 #include "image.hpp"
+#define STBI_FAILURE_USERMSG
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <sstream>
+
+unsigned char *create_buffer(size_t sz)
+{
+    unsigned char *buffer = static_cast<unsigned char *>(malloc(sz));
+    if (!buffer)
+    {
+        throw image_error("Could not allocate memory");
+    }
+    return buffer;
+}
+
+void free_buffer(unsigned char *ptr)
+{
+    if (ptr)
+    {
+        free(ptr);
+    }
+}
 
 Image::Image()
     : width_(0), height_(0), num_components_(0), buffer_(nullptr), is_buffer_created_by_stbi(false)
@@ -35,7 +54,7 @@ auto Image::channels() const -> int { return num_components_; }
 
 auto Image::buffer() -> unsigned char * { return buffer_; }
 
-auto Image::size() const -> int { return width_ * height_ * num_components_; }
+auto Image::size() const -> size_t { return width_ * height_ * num_components_; }
 
 Image::~Image()
 {
@@ -47,7 +66,7 @@ Image::~Image()
         }
         else
         {
-            free(buffer_);
+            free_buffer(buffer_);
         }
         buffer_ = nullptr;
     }
@@ -63,11 +82,8 @@ Image::Image(const Image &other)
     buffer_ = nullptr;
     if (other.size() != 0)
     {
-        buffer_ = static_cast<unsigned char *>(malloc(size()));
-        if (!buffer_)
-        {
-            throw image_error("Could not allocate memory to copy the image");
-        }
+        buffer_ = create_buffer(size());
+        memcpy(buffer_, other.buffer_, other.size());
     }
 }
 
@@ -83,4 +99,70 @@ Image &Image::operator=(Image &&other) noexcept
 {
     swap(*this, other);
     return *this;
+}
+
+Image Image::from_buffer(unsigned char *buffer, int width, int height, int channels)
+{
+    Image img;
+    img.width_ = width;
+    img.height_ = height;
+    img.num_components_ = channels;
+    img.buffer_ = buffer;
+    img.is_buffer_created_by_stbi = false;
+    return img;
+}
+
+Image Image::create(int width, int height, int channels)
+{
+    Image img;
+    img.width_ = width;
+    img.height_ = height;
+    img.num_components_ = channels;
+    img.buffer_ = create_buffer(img.size());
+    img.is_buffer_created_by_stbi = false;
+    return img;
+}
+
+auto Image::at_gray(int row, int col) const -> Color
+{
+    unsigned char *ptr = buffer_ + (num_components_ * (row * width_ + col));
+    Color c;
+    c.r = ptr[0];
+    c.g = ptr[0];
+    c.b = ptr[0];
+    return c;
+}
+
+auto Image::at_gray_alpha(int row, int col) const -> Color
+{
+    unsigned char *ptr = buffer_ + (num_components_ * (row * width_ + col));
+    Color c;
+    c.has_alpha = true;
+    c.r = ptr[0];
+    c.g = ptr[0];
+    c.b = ptr[0];
+    c.a = ptr[1];
+    return c;
+}
+
+auto Image::at_rgb(int row, int col) const -> Color
+{
+    unsigned char *ptr = buffer_ + (num_components_ * (row * width_ + col));
+    Color c;
+    c.r = ptr[0];
+    c.g = ptr[1];
+    c.b = ptr[2];
+    return c;
+}
+
+auto Image::at_rgba(int row, int col) const -> Color
+{
+    unsigned char *ptr = buffer_ + (num_components_ * (row * width_ + col));
+    Color c;
+    c.has_alpha = true;
+    c.r = ptr[0];
+    c.g = ptr[1];
+    c.b = ptr[2];
+    c.a = ptr[3];
+    return c;
 }

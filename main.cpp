@@ -17,6 +17,8 @@ auto main(int argc, char *argv[]) -> int
         swap(ghi, img);
         std::cout << "Resolution: " << img.width() << "x" << img.height() << std::endl;
         std::cout << "Number of channels: " << img.channels() << std::endl;
+        std::cout << img.at_rgb(0, 0).format_hex() << std::endl;
+        std::cout << img.at_rgb(0, 0).format_tuple() << std::endl;
     }
     catch (std::exception &e)
     {
