@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 class Color
 {
@@ -22,6 +23,13 @@ class Color
         : r(r), g(g), b(b), a(a), has_alpha(true)
     {
     }
+
+    bool operator==(Color other) const
+    {
+        return r == other.r && g == other.g && b == other.b && a == other.a;
+    }
+
+    bool operator!=(Color other) const { return !operator==(other); }
 
     auto format_hex() const -> std::string
     {
@@ -104,6 +112,7 @@ class Image
     auto at_gray_alpha(int row, int col) const -> Color;
     auto at_rgb(int row, int col) const -> Color;
     auto at_rgba(int row, int col) const -> Color;
+    auto get_colors() const -> std::vector<Color>;
 
     ~Image();
     Image(const Image &other);

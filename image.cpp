@@ -3,6 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <sstream>
+#include <vector>
 
 unsigned char *create_buffer(size_t sz)
 {
@@ -167,4 +168,24 @@ auto Image::at_rgba(int row, int col) const -> Color
     c.b = ptr[2];
     c.a = ptr[3];
     return c;
+}
+
+auto Image::get_colors() const -> std::vector<Color>
+{
+    std::vector<Color> colors;
+    colors.resize(width_ * height_);
+    for (size_t i = 0; i < width_ * height_; ++i)
+    {
+        unsigned char *ptr = buffer_ + (num_components_ * i);
+        colors[i].r = ptr[0];
+        colors[i].g = ptr[1];
+        colors[i].b = ptr[2];
+        if (num_components_ == 4)
+        {
+            colors[i].a = ptr[3];
+            colors[i].has_alpha = true;
+        }
+    }
+
+    return colors;
 }
