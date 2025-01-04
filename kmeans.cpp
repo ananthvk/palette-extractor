@@ -55,6 +55,32 @@ auto KMeans::fit(const std::vector<Color> &colors, int n_iters) -> int
     return n_iters;
 }
 
+auto KMeans::predict(const std::vector<Color> &colors) -> std::vector<int>
+{
+    std::vector<int> clusters(colors.size(), 0);
+    assign_points_to_clusters(colors, clusters);
+    return clusters;
+}
+
+auto KMeans::fit_predict(const std::vector<Color> &colors, int n_iters) -> std::vector<int>
+{
+    // 1) Initialize the centroids to random points
+    initialize(colors);
+    // 2) Assign each point to it's closest centroid
+    std::vector<int> clusters(colors.size(), 0);
+
+    for (int i = 1; i <= n_iters; ++i)
+    {
+        assign_points_to_clusters(colors, clusters);
+        // 3) Shift the centroid to the average of items in its cluster
+        if (!update_centroids(colors, clusters))
+        {
+            return clusters;
+        }
+    }
+    return clusters;
+}
+
 auto KMeans::labels() const -> const std::vector<Color> & { return centroids; }
 
 auto KMeans::initialize(const std::vector<Color> &colors) -> void

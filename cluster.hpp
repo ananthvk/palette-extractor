@@ -10,6 +10,8 @@ class Cluster
 
     virtual auto fit(const std::vector<Color> &colors, int n_iters) -> int = 0;
     virtual auto labels() const -> const std::vector<Color> & = 0;
+    virtual auto predict(const std::vector<Color> &colors) -> std::vector<int> = 0;
+    virtual auto fit_predict(const std::vector<Color> &colors, int n_iters) -> std::vector<int> = 0;
 };
 
 class KMeans : Cluster
@@ -28,4 +30,6 @@ class KMeans : Cluster
     KMeans(int k);
     auto fit(const std::vector<Color> &colors, int n_iters = 100) -> int;
     auto labels() const -> const std::vector<Color> &;
+    auto predict(const std::vector<Color> &colors) -> std::vector<int>;
+    auto fit_predict(const std::vector<Color> &colors, int n_iters = 100) -> std::vector<int>;
 };
