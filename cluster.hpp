@@ -8,15 +8,16 @@ class Cluster
   public:
     virtual ~Cluster() {}
 
-    virtual auto fit(const std::vector<Color> &colors, int n_iters) -> int = 0;
+    virtual auto fit(const std::vector<Color> &colors) -> int = 0;
     virtual auto labels() const -> const std::vector<Color> & = 0;
     virtual auto predict(const std::vector<Color> &colors) -> std::vector<int> = 0;
-    virtual auto fit_predict(const std::vector<Color> &colors, int n_iters) -> std::vector<int> = 0;
+    virtual auto fit_predict(const std::vector<Color> &colors) -> std::vector<int> = 0;
 };
 
-class KMeans : Cluster
+class KMeans : public Cluster
 {
     int k;
+    int n_iters;
     std::vector<Color> centroids;
     auto initialize(const std::vector<Color> &colors) -> void;
     auto assign_points_to_clusters(const std::vector<Color> &colors,
@@ -27,9 +28,10 @@ class KMeans : Cluster
                           const std::vector<int> &clusters) -> bool;
 
   public:
-    KMeans(int k);
-    auto fit(const std::vector<Color> &colors, int n_iters = 100) -> int;
+    KMeans(int k, int n_iters = 100);
+    auto fit(const std::vector<Color> &colors) -> int;
     auto labels() const -> const std::vector<Color> &;
     auto predict(const std::vector<Color> &colors) -> std::vector<int>;
-    auto fit_predict(const std::vector<Color> &colors, int n_iters = 100) -> std::vector<int>;
+    auto fit_predict(const std::vector<Color> &colors) -> std::vector<int>;
+    static auto from_palette(const std::vector<Color>& palette) -> KMeans;
 };

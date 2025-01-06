@@ -34,9 +34,9 @@ struct ClusterSum
     }
 };
 
-KMeans::KMeans(int k) : k(k), centroids(k, Color{}) {}
+KMeans::KMeans(int k, int n_iters) : k(k), n_iters(n_iters), centroids(k, Color{}) {}
 
-auto KMeans::fit(const std::vector<Color> &colors, int n_iters) -> int
+auto KMeans::fit(const std::vector<Color> &colors) -> int
 {
     // 1) Initialize the centroids to random points
     initialize(colors);
@@ -62,7 +62,7 @@ auto KMeans::predict(const std::vector<Color> &colors) -> std::vector<int>
     return clusters;
 }
 
-auto KMeans::fit_predict(const std::vector<Color> &colors, int n_iters) -> std::vector<int>
+auto KMeans::fit_predict(const std::vector<Color> &colors) -> std::vector<int>
 {
     // 1) Initialize the centroids to random points
     initialize(colors);
@@ -151,4 +151,11 @@ auto KMeans::update_centroids(const std::vector<Color> &colors,
         }
     }
     return number_of_centroids_changed != 0;
+}
+
+auto KMeans::from_palette(const std::vector<Color> &palette) -> KMeans
+{
+    KMeans kmeans(palette.size());
+    kmeans.centroids = palette;
+    return kmeans;
 }

@@ -1,176 +1,105 @@
 #include "cluster.hpp"
 #include "image.hpp"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "operations.hpp"
+#include <fstream>
 #include <iostream>
+#include <string.h>
+#define NUMBER_OF_ITERATIONS 100
 using std::swap;
 
+auto help_message() -> void
+{
+    std::cerr << "Usage:\npalette extract <number_of_colors> <output_palette_file> <input_image>"
+              << std::endl;
+    std::cerr << "palette apply <palette_file> <output_image> <input_image>" << std::endl;
+}
+
 auto main(int argc, char *argv[]) -> int
 {
-    if (argc != 5)
-    {
-        std::cerr << "Usage: palette reduce <number_of_colors> <image_file_to_extract_palette> "
-                     "<image_file>"
-                  << std::endl;
-        exit(1);
-    }
     try
     {
-        Image palette_img = Image::from_file(argv[3]);
-        std::cout << "Resolution: " << palette_img.width() << "x" << palette_img.height() << std::endl;
-        if (palette_img.channels() < 3)
+        if (argc <= 2)
         {
-            std::cout << "Error: Number of channels: " << palette_img.channels()
-                      << ", image should have 3/4 channels" << std::endl;
-            exit(1);
+            help_message();
+            return 1;
         }
-
-        int k = 0;
-        std::istringstream iss(argv[2]);
-        iss >> k;
-        if (!iss || k < 0)
+        if (std::string(argv[1]) == "extract" && argc == 5)
         {
-            std::cerr << "Invalid number of colors" << std::endl;
-            exit(1);
-        }
-
-        auto colors = palette_img.get_colors();
-        KMeans kmeans(k);
-        kmeans.fit(colors);
-
-        Image img2 = Image::from_file(argv[4]);
-        auto colors_clustered = kmeans.predict(img2.get_colors());
-
-        auto labels = kmeans.labels();
-
-        auto converted_image = Image::create(img2.width(), img2.height(), img2.channels());
-        unsigned char *buffer = converted_image.buffer();
-        for (size_t i = 0; i < (img2.width() * img2.height()); ++i)
-        {
-            unsigned char *ptr = buffer + (img2.channels() * i);
-            auto color = labels[colors_clustered[i]];
-
-            ptr[0] = color.r;
-            ptr[1] = color.g;
-            ptr[2] = color.b;
-            if (img2.channels() == 4)
+            int number_of_colors = std::stoi(argv[2]);
+            KMeans kmeans(number_of_colors, NUMBER_OF_ITERATIONS);
+            auto palette = extract(argv[4], kmeans);
+            // TOOD: Some error checks omitted, add it later
+            std::ofstream output_palette_file(argv[3]);
+            if (!output_palette_file)
             {
-                ptr[3] = color.a;
+                std::cerr << "Error while writing palette file: " << strerror(errno) << std::endl;
+                return 1;
+            }
+            // First write the number of components, i.e. RGB or RGBA
+            output_palette_file << ((palette[0].has_alpha) ? 4 : 3) << std::endl;
+            for (const auto &color : palette)
+            {
+                output_palette_file << +color.r << " " << +color.g << " " << +color.b;
+                if (color.has_alpha)
+                    output_palette_file << " " << +color.a;
+                output_palette_file << std::endl;
             }
         }
-        stbi_write_png("output.png", img2.width(), img2.height(), img2.channels(), buffer,
-                       img2.width() * img2.channels());
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-        exit(2);
-    }
-}
-
-/*
-auto main(int argc, char *argv[]) -> int
-{
-    if (argc != 4)
-    {
-        std::cerr << "Usage: palette reduce <number_of_colors> <image_file>" << std::endl;
-        exit(1);
-    }
-    try
-    {
-        Image img = Image::from_file(argv[3]);
-        std::cout << "Resolution: " << img.width() << "x" << img.height() << std::endl;
-        if (img.channels() < 3)
+        else if (std::string(argv[1]) == "apply" && argc == 5)
         {
-            std::cout << "Error: Number of channels: " << img.channels()
-                      << ", image should have 3/4 channels" << std::endl;
-            exit(1);
-        }
-
-        int k = 0;
-        std::istringstream iss(argv[2]);
-        iss >> k;
-        if (!iss || k < 0)
-        {
-            std::cerr << "Invalid number of colors" << std::endl;
-            exit(1);
-        }
-
-        auto colors = img.get_colors();
-        KMeans kmeans(k);
-        auto colors_clustered = kmeans.fit_predict(colors);
-        auto labels = kmeans.labels();
-
-        auto converted_image = Image::create(img.width(), img.height(), img.channels());
-        unsigned char *buffer = converted_image.buffer();
-        for (size_t i = 0; i < (img.width() * img.height()); ++i)
-        {
-            unsigned char *ptr = buffer + (img.channels() * i);
-            auto color = labels[colors_clustered[i]];
-
-            ptr[0] = color.r;
-            ptr[1] = color.g;
-            ptr[2] = color.b;
-            if (img.channels() == 4)
+            std::ifstream input_palette_file(argv[2]);
+            if (!input_palette_file)
             {
-                ptr[3] = color.a;
+                std::cerr << "Error while reading palette file: " << strerror(errno) << std::endl;
+                return 1;
             }
+            std::string line;
+            std::vector<Color> palette;
+            // Read number of components
+            std::getline(input_palette_file, line);
+            std::stringstream s(line);
+            int n_components;
+            s >> n_components;
+
+            std::cout << "Read palette file which has " << n_components << std::endl;
+
+            while (std::getline(input_palette_file, line))
+            {
+                if (line.empty())
+                    continue;
+                int r, g, b;
+                std::stringstream ss(line);
+                // TODO Handle alpha channel
+                ss >> r >> g >> b;
+                Color c;
+                c.r = static_cast<unsigned char>(r);
+                c.g = static_cast<unsigned char>(g);
+                c.b = static_cast<unsigned char>(b);
+                if (n_components == 4)
+                {
+                    int a;
+                    ss >> a;
+                    c.a = static_cast<unsigned char>(a);
+                    c.has_alpha = true;
+                }
+                palette.push_back(c);
+            }
+            apply(argv[4], argv[3], palette);
         }
-        stbi_write_png("output.png", img.width(), img.height(), img.channels(), buffer,
-                       img.width() * img.channels());
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-        exit(2);
-    }
-}
-*/
-/*
-auto main(int argc, char *argv[]) -> int
-{
-    if (argc != 4)
-    {
-        std::cerr << "Usage: palette extract <number_of_colors> <image_file>" << std::endl;
-        exit(1);
-    }
-    try
-    {
-        Image img = Image::from_file(argv[3]);
-        std::cout << "Resolution: " << img.width() << "x" << img.height() << std::endl;
-        if (img.channels() < 3)
+        else if (std::string(argv[1]) == "help")
         {
-            std::cout << "Error: Number of channels: " << img.channels()
-                      << ", image should have 3/4 channels" << std::endl;
-            exit(1);
+            help_message();
+            return 0;
         }
-
-        int k = 0;
-        std::istringstream iss(argv[2]);
-        iss >> k;
-        if (!iss || k < 0)
+        else
         {
-            std::cerr << "Invalid number of colors" << std::endl;
-            exit(1);
-        }
-
-        auto colors = img.get_colors();
-        KMeans kmeans(k);
-        auto iterations = kmeans.fit(colors);
-        std::cout << "Converged in " << iterations << " iterations" << std::endl;
-        std::cout << "Dominant colors: " << std::endl;
-
-        auto &labels = kmeans.labels();
-
-        for (int i = 0; i < k; ++i)
-        {
-            std::cout << labels[i].format_hex() << std::endl;
+            help_message();
+            return 1;
         }
     }
     catch (std::exception &e)
     {
         std::cerr << e.what() << std::endl;
-        exit(2);
+        return 1;
     }
 }
-*/
