@@ -15,6 +15,12 @@ $ palette extract 5 output.txt cat.png
 $ palette apply output.txt cat_reduced.png cat.png
 ```
 
+To make a wallpaper match to a colorscheme,
+```
+$ palette apply gruvbox-material-palette.txt output.png ~/Pictures/wallpaper.jpg
+```
+
+The first line of the palette file determines whether the colors are RGB or RGBA. Each subsequent line contains the color.
 
 ## Building
 Install Meson, and a backend (such as Ninja) and run the following commands:

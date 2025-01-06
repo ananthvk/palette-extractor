@@ -61,8 +61,6 @@ auto main(int argc, char *argv[]) -> int
             int n_components;
             s >> n_components;
 
-            std::cout << "Read palette file which has " << n_components << std::endl;
-
             while (std::getline(input_palette_file, line))
             {
                 if (line.empty())
