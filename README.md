@@ -38,3 +38,7 @@ $ meson setup --reconfigure builddir
 $ cd builddir
 $ meson  -v
 ```
+
+## Notes
+
+Inspired by [ImageGoNord](https://github.com/Schroedinger-Hat/ImageGoNord-Web)
