@@ -42,3 +42,10 @@ $ meson  -v
 ## Notes
 
 Inspired by [ImageGoNord](https://github.com/Schroedinger-Hat/ImageGoNord-Web)
+
+## Todo
+
+- [ ] Implement KMeans++ algorithm
+- [ ] Check if the image has 3 or 4 components
+- [ ] Ignore alpha channel when computing palette 
+- [ ] Have a list of palettes, and the program can apply standard palettes
